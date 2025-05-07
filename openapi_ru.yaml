@@ -98,74 +98,56 @@ components:
         time_limit_in_millis:
           type: integer
           description: Интервал между перевыставлениями в миллисекундах
-    AssetLeg:
-      type: object
-      required: [ticker, quantity, side]
-      properties:
-        ticker:
-          type: string
-          description: Тикер инструмента
-        mic:
-          type: string
-          description: MIC тикера
-        destination:
-          type: string
-          description: Площадка исполнения заявки (например NYSE)
-        quantity:
-          type: number
-          description: Количество
-        side:
-          type: string
-          enum: [buy, sell]
-          description: Направление операции (покупка или продажа)
     OrderRequest:
       type: object
-      required: [assets, side, quantity, ticker]
       properties:
-        client_order_id:
+        client_hft_order_id:
           type: string
           format: uuid
           description: Опциональный ID клиента (uuid)
         comment:
           type: string
           description: Комментарий пользователя
-        assets:
-          type: array
-          description: Многосторонняя заявка (пусто для одиночной заявки)
-          items:
-            $ref: '#/components/schemas/AssetLeg'
-        ticker:
-          type: string
-          description: Тикер инструмента для одиночной заявки
-        destination:
-          type: string
-          description: Площадка исполнения (по умолчанию NYSE для американских акций)
-        mic:
-          type: string
-          description: MIC тикера (по умолчанию для американских акций)
-        quantity:
-          type: number
-          description: Количество лотов (1 лот = 1 акция для американских акций)
-        side:
-          type: string
-          enum: [buy, sell]
-          description: Направление операции
         time_in_force:
           type: string
           enum: [GTC, DAY]
           default: GTC
           description: Время действия заявки (GTC – до полного исполнения, DAY – до конца сессии)
-        mode:
-          type: string
-          enum: [optimal, best_price, best_time]
-          default: optimal
-          description: Предустановки исполнения (optimal, best_price, best_time)
-        execution:
-          $ref: '#/components/schemas/ExecutionOptions'
+        orders:
+          type: array
+          description: Список заявок
+          items:
+            type: object
+            required: [ticker, quantity, side]
+            properties:
+              ticker:
+                type: string
+                description: Тикер инструмента
+              mic:
+                type: string
+                description: MIC тикера (по умолчанию для американских акций)
+              destination:
+                type: string
+                description: Площадка исполнения (например NYSE)
+              quantity:
+                type: number
+                description: Количество лотов (1 лот = 1 акция для американских акций)
+              side:
+                type: string
+                enum: [buy, sell]
+                description: Направление операции
+              mode:
+                type: string
+                enum: [optimal, best_price, best_time]
+                default: optimal
+                description: Предустановки исполнения (optimal, best_price, best_time)
+              execution:
+                $ref: '#/components/schemas/ExecutionOptions'
+      required: [orders]
     OrderAccepted:
       type: object
       properties:
-        client_order_id:
+        client_hft_order_id:
           type: string
           format: uuid
           description: Опциональный ID клиента (uuid)
