@@ -1,0 +1,344 @@
+openapi: 3.0.3
+info:
+  title: HFT Order Service API
+  version: "1.0.0"
+  description: 
+    $ref: "./docs/description_ru.md"
+servers:
+  - url: https://api.hftorders.online
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    LimitParam:
+      name: limit
+      in: query
+      description: Максимальное количество заявок в результате (не более 1000)
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+    OffsetParam:
+      name: offset
+      in: query
+      description: Смещение от начала списка
+      schema:
+        type: integer
+        minimum: 0
+    OrderDateFrom:
+      name: order_date_from
+      in: query
+      description: Минимальная дата заявки (формат ISO-8601)
+      schema:
+        type: string
+        format: date-time
+    OrderDateTo:
+      name: order_date_to
+      in: query
+      description: Максимальная дата заявки (формат ISO-8601)
+      schema:
+        type: string
+        format: date-time
+  schemas:
+    Instrument:
+      type: object
+      properties:
+        ticker:
+          type: string
+          description: Тикер инструмента
+        mic:
+          type: string
+          description: MIC тикера, идентифицирующий группу инструментов
+        name:
+          type: string
+          description: Название инструмента
+        description:
+          type: string
+          description: Описание инструмента
+        lot_size:
+          type: integer
+          description: Лотность (размер одного лота)
+        step:
+          type: number
+          description: Минимальный шаг цены
+        step_price:
+          type: number
+          description: Стоимость одного шага цены в валюте котировки
+        scale:
+          type: integer
+          description: Точность цены (количество знаков после запятой)
+        is_active:
+          type: boolean
+          description: Флаг активности инструмента
+      required: [ticker, mic, name, lot_size, step, step_price, scale, is_active]
+    ExecutionOptions:
+      type: object
+      description: Настройки исполнения заявки
+      properties:
+        is_maker_in_first_stage:
+          type: boolean
+          description: Определяет базу для отступа цены на первой серии попыток (true - от bid при покупке и от ask при продаже)
+        first_stage_price_shift_in_steps:
+          type: integer
+          description: Отступ на первой серии попыток в шагах цены
+        first_stage_attempt_count:
+          type: integer
+          description: Количество перевыставлений на первой серии попыток
+        second_stage_price_shift_in_steps:
+          type: integer
+          description: Отступ на второй серии попыток (от bid при продаже и от ask при покупке)
+        second_stage_attempt_count:
+          type: integer
+          description: Количество перевыставлений на второй серии попыток
+        time_limit_in_millis:
+          type: integer
+          description: Интервал между перевыставлениями в миллисекундах
+    AssetLeg:
+      type: object
+      required: [ticker, quantity, side]
+      properties:
+        ticker:
+          type: string
+          description: Тикер инструмента
+        mic:
+          type: string
+          description: MIC тикера
+        destination:
+          type: string
+          description: Площадка исполнения заявки (например NYSE)
+        quantity:
+          type: number
+          description: Количество
+        side:
+          type: string
+          enum: [buy, sell]
+          description: Направление операции (покупка или продажа)
+    OrderRequest:
+      type: object
+      required: [assets, side, quantity, ticker]
+      properties:
+        client_order_id:
+          type: string
+          format: uuid
+          description: Опциональный ID клиента (uuid)
+        comment:
+          type: string
+          description: Комментарий пользователя
+        assets:
+          type: array
+          description: Многосторонняя заявка (пусто для одиночной заявки)
+          items:
+            $ref: '#/components/schemas/AssetLeg'
+        ticker:
+          type: string
+          description: Тикер инструмента для одиночной заявки
+        destination:
+          type: string
+          description: Площадка исполнения (по умолчанию NYSE для американских акций)
+        mic:
+          type: string
+          description: MIC тикера (по умолчанию для американских акций)
+        quantity:
+          type: number
+          description: Количество лотов (1 лот = 1 акция для американских акций)
+        side:
+          type: string
+          enum: [buy, sell]
+          description: Направление операции
+        time_in_force:
+          type: string
+          enum: [GTC, DAY]
+          default: GTC
+          description: Время действия заявки (GTC – до полного исполнения, DAY – до конца сессии)
+        mode:
+          type: string
+          enum: [optimal, best_price, best_time]
+          default: optimal
+          description: Предустановки исполнения (optimal, best_price, best_time)
+        execution:
+          $ref: '#/components/schemas/ExecutionOptions'
+    OrderAccepted:
+      type: object
+      properties:
+        client_order_id:
+          type: string
+          format: uuid
+          description: Опциональный ID клиента (uuid)
+        trade_order_id:
+          type: string
+          description: Внутренний номер заявки
+      required: [trade_order_id]
+    ErrorResponse:
+      type: object
+      properties:
+        error_code:
+          type: string
+          description: |
+            01 – ошибка в запросе
+            02 – ошибка размещения (например недостаточно средств)
+            03 – техническая ошибка
+        error_description:
+          type: string
+          description: Описание ошибки
+      required: [error_code, error_description]
+    TradeReport:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Время отчета об исполнении
+        stock_exchange_order_id:
+          type: string
+          description: ID заявки брокера
+        quantity:
+          type: number
+          description: Исполненное количество
+        price:
+          type: number
+          description: Цена исполнения
+    OrderDetails:
+      allOf:
+        - $ref: '#/components/schemas/OrderRequest'
+        - type: object
+          required: [order_date, executed_quantity]
+          properties:
+            trade_order_id:
+              type: string
+              description: Внутренний номер заявки
+            order_date:
+              type: string
+              format: date-time
+              description: Дата и время приема заявки
+            executed_quantity:
+              type: number
+              description: Исполненное количество лотов
+            average_price:
+              type: number
+              description: Средняя цена исполнения
+            trades:
+              type: array
+              description: Список отчетов об исполнении
+              items:
+                $ref: '#/components/schemas/TradeReport'
+paths:
+  /api/instruments:
+    get:
+      summary: Получить список инструментов
+      parameters:
+        - name: search
+          in: query
+          description: Строка для поиска по тикеру или названию инструмента
+          schema:
+            type: string
+        - name: ticker
+          in: query
+          description: Тикер инструмента
+          schema:
+            type: string
+        - name: mic
+          in: query
+          description: MIC тикера
+          schema:
+            type: string
+        - name: is_active
+          in: query
+          description: Доступен ли инструмент для торговли
+          schema:
+            type: boolean
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/OffsetParam'
+      responses:
+        '200':
+          description: Список инструментов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Instrument'
+  /api/order:
+    post:
+      summary: Разместить новую заявку
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        '200':
+          description: Заявка успешно принята
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderAccepted'
+        '400':
+          description: Ошибка размещения заявки (валидность, бизнес-логика или техническая)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/order/by-id/{id}:
+    get:
+      summary: Получить заявку по внутреннему ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Внутренний номер заявки
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Детали заявки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetails'
+        '404':
+          description: Заявка не найдена
+  /api/order/by-client-id/{client_id}:
+    get:
+      summary: Получить заявку по ID клиента
+      parameters:
+        - name: client_id
+          in: path
+          required: true
+          description: Опциональный ID клиента (uuid)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали заявки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetails'
+        '404':
+          description: Заявка не найдена
+  /api/orders:
+    get:
+      summary: Получить список заявок
+      parameters:
+        - $ref: '#/components/parameters/OrderDateFrom'
+        - $ref: '#/components/parameters/OrderDateTo'
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/OffsetParam'
+      responses:
+        '200':
+          description: Список заявок
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderDetails'
