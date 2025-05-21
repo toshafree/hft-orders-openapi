@@ -236,7 +236,7 @@ components:
         created:
           type: string
           format: date-time
-          description: Дата и время приёма заявки
+          description: Дата и время приёма заявки в UTC ISO-8601 пример 2025-05-21T12:25:25Z
         orders:
           type: array
           description: Детализация по каждому приказу
