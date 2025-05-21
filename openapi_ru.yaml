@@ -270,7 +270,7 @@ paths:
   # ────────────────────────────────────────────────────────────────────────────
   #  LIVE-торговля
   # ────────────────────────────────────────────────────────────────────────────
-  /api/hft-order:                           # создание заявки (live)
+  /api/hft-orders:                           # создание заявки (live)
     post:
       summary: Разместить новую заявку (live)
       security: [ { bearerAuth: [] } ]
@@ -332,7 +332,7 @@ paths:
   # ────────────────────────────────────────────────────────────────────────────
   #  DEMO-торговля (виртуальный контур) — дублирование live-методов
   # ────────────────────────────────────────────────────────────────────────────
-  /api/demo/order:                          # создание заявки (demo)
+  /api/demo/hft-orders:                          # создание заявки (demo)
     post:
       summary: Разместить новую заявку в демо-контуре
       security: [ { bearerAuth: [] } ]
@@ -353,7 +353,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
 
-  /api/demo/orders:                         # список заявок (demo)
+  /api/demo/hft-orders:                         # список заявок (demo)
     get:
       summary: Получить список заявок в демо-контуре
       parameters:
@@ -370,7 +370,7 @@ paths:
                 type: array
                 items: { $ref: '#/components/schemas/OrderDetails' }
 
-  /api/demo/orders/{hft_order_id}:          # заявка по ID (demo)
+  /api/demo/hft-orders/{hft_order_id}:          # заявка по ID (demo)
     get:
       summary: Получить заявку по ID в демо-контуре
       parameters:
