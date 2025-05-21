@@ -183,6 +183,9 @@ components:
             average_price:
               type: number
               description: Средняя цена исполнения
+            status:
+              type: string
+              description: Статус приказа, active - исполняется, finished - успешно завершен, failed - частичное заполнение из-за ошибки, liquidated - не заполнен из-за ошибки
             trades:
               type: array
               description: Список сделок
@@ -272,6 +275,9 @@ components:
           type: string
           format: date-time
           description: Дата и время приёма заявки в UTC ISO-8601 пример 2025-05-21T12:25:25Z
+        status:
+          type: string
+          description: Статус заявки, active - исполняется, finished - успешно исполнена, failed - частичное заполнение из-за ошибки, liquidated - не исполнена из-за ошибки
         orders:
           type: array
           description: Детализация по каждому приказу
