@@ -291,7 +291,6 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
 
-  /api/hft-orders:                          # список заявок (live)
     get:
       summary: Получить список заявок (live)
       parameters:
@@ -353,7 +352,6 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
 
-  /api/demo/hft-orders:                         # список заявок (demo)
     get:
       summary: Получить список заявок в демо-контуре
       parameters:
