@@ -151,6 +151,26 @@ components:
         execution:
           $ref: '#/components/schemas/ExecutionOptions'
 
+    DemoOrderItemRequest:
+      type: object
+      required: [ticker, quantity, side, execution]
+      properties:
+        ticker:
+          type: string
+          description: Тикер инструмента
+        live_connection_code:
+          type: string
+          description: Код подключения маркет-даты (по умолчанию US-stocks)
+        quantity:
+          type: number
+          description: Количество лотов (для US-stocks — 1 лот = 1 акция)
+        side:
+          type: string
+          enum: [buy, sell]
+          description: Направление (buy — покупка, sell — продажа)
+        execution:
+          $ref: '#/components/schemas/ExecutionOptions'
+
     OrderItemDetails:
       allOf:
         - $ref: '#/components/schemas/OrderItemRequest'
@@ -183,6 +203,21 @@ components:
           description: Состав заявки HFT-Order (один или несколько приказов)
           items:
             $ref: '#/components/schemas/OrderItemRequest'
+
+    DemoOrderRequest:
+      type: object
+      required: [hft_order_id, orders]
+      properties:
+        hft_order_id:
+          type: string
+          format: uuid
+          description: Уникальный ID заявки HFT-Order, назначаемый клиентом
+        orders:
+          type: array
+          minItems: 1
+          description: Состав заявки HFT-Order (один или несколько приказов)
+          items:
+            $ref: '#/components/schemas/DemoOrderItemRequest'
 
     OrderAccepted:
       type: object
@@ -339,7 +374,7 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/OrderRequest' }
+            schema: { $ref: '#/components/schemas/DemoOrderRequest' }
       responses:
         '200':
           description: Accepted
